@@ -1,0 +1,65 @@
+# Data and training outputs
+data/
+runs/*
+!runs/lego_3dgut_tutorial/
+runs/lego_3dgut_tutorial/*
+!runs/lego_3dgut_tutorial/lego-1702_014528/
+runs/lego_3dgut_tutorial/lego-1702_014528/*
+!runs/lego_3dgut_tutorial/lego-1702_014528/export_last.usdz
+
+# Third-party repositories
+3dgrut/
+cosmos-reason2/
+
+# Python environments
+miniconda3/
+.venv/
+.conda/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Cache and temp files
+.cache/
+.ipynb_checkpoints/
+*.log
+
+# SSH and config
+.ssh/
+.bash_history
+.lesshst
+.sudo_as_admin_successful
+
+# Other
+.codeium/
+.jupyter/
+.ipython/
+.local/
+.nv/
+.windsurf/
+.windsurf-server/
+.anaconda/
+.config/
+.lifecycle-script-*.log
+.verb-setup.log
+.bash_logout
+.bashrc
+.profile
+.zshrc
+
+# Documentation files to exclude
+GETTING_STARTED.md
+GS_TUTORIAL_README.md
+IMPLEMENTATION_SUMMARY.md
+start_tutorial.sh
+interactive_viewer.ipynb

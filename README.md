@@ -1,6 +1,6 @@
 # 3D Gaussian Splatting Tutorial
 
-Train 3DGUT models on NeRF Synthetic dataset and export to USD.
+Train 3DGUT models on NeRF Synthetic dataset and export to USD. This setup was run in Nvidia Brev (https://docs.nvidia.com/brev/latest/about-brev.html)
 
 ## Setup
 

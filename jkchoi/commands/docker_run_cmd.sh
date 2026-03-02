@@ -1,5 +1,4 @@
 
-export NGC_API_KEY="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"
 
 # Choose a container name for bookkeeping
 export CONTAINER_NAME="nvidia-cosmos-reason2-2b" # or "nvidia-cosmos-reason2-8b"

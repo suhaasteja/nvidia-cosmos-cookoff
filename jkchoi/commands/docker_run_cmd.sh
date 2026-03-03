@@ -16,5 +16,5 @@ export LOCAL_NIM_CACHE=~/.cache/nim
 mkdir -p "$LOCAL_NIM_CACHE"
 
 # Start the VLM NIM
-docker run -it --rm --name=$CONTAINER_NAME --runtime=nvidia --gpus all --shm-size=32GB -e NGC_API_KEY=$NGC_API_KEY -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" -u $(id -u) -p 8000:8000 $IMG_NAME
+docker run -it --rm --name=$CONTAINER_NAME --runtime=nvidia --gpus all --shm-size=32GB --add-host=host.docker.internal:host-gateway -e NGC_API_KEY=$NGC_API_KEY -v "$LOCAL_NIM_CACHE:/opt/nim/.cache" -u $(id -u) -p 8000:8000 $IMG_NAME
 

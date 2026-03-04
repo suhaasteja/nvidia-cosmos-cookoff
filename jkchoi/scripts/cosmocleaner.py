@@ -10,7 +10,9 @@ import requests
 from PIL import Image
 
 
-DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/1469185959500316873/1478445984022265856/AOI_d_86w705b7ruYIAfJ5cA1vJ9UTe0RKT_SIzEYGbiiHcqw-DIt2dBLkb_4sm49oHPc11Ys05npaNJOq-1ldaJP_6G1odcOFKYcIhy6PgPQkxMcSbYVsm4amVb5GPNHoDMAOZoGnY1W-EfHbpWSAXVps61Z0xhRlJJjpjSoLBHoZGv0StREAs1024-rj.png?ex=69a86d9e&is=69a71c1e&hm=771595524952303569f8952433d72d3db3ee328c3bf0ad2a04778d1d4eab63fb&=&format=webp&quality=lossless&width=1280&height=859"
+#DEFAULT_IMAGE_URL = "https://media.discordapp.net/attachments/1469185959500316873/1478445984022265856/AOI_d_86w705b7ruYIAfJ5cA1vJ9UTe0RKT_SIzEYGbiiHcqw-DIt2dBLkb_4sm49oHPc11Ys05npaNJOq-1ldaJP_6G1odcOFKYcIhy6PgPQkxMcSbYVsm4amVb5GPNHoDMAOZoGnY1W-EfHbpWSAXVps61Z0xhRlJJjpjSoLBHoZGv0StREAs1024-rj.png?ex=69a86d9e&is=69a71c1e&hm=771595524952303569f8952433d72d3db3ee328c3bf0ad2a04778d1d4eab63fb&=&format=webp&quality=lossless&width=1280&height=859"
+
+DEFAULT_IMAGE_URL = "https://media.istockphoto.com/id/1990444472/photo/scandinavian-style-cozy-living-room-interior.jpg?s=1024x1024&w=is&k=20&c=kHJB-lnK-XmClW7tcWCO68POsyd6H3v0RA5IWCEODb4="
 
 DEFAULT_INSTRUCTION = """Instruction:
 Current Odometry:

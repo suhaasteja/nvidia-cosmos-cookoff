@@ -148,119 +148,78 @@ def reason2_action(req: Reason2Request, x_api_key: str = Header(default="")):
     else:
         raise HTTPException(status_code=400, detail="Either image_url or image_b64 must be provided")
 
-    # Enforce strict JSON output from the model
-    #prompt = (
-    #    "You are a robot vacuum front-facing camera.\n"
-    #    "Decide if the forward path is BLOCKED.\n"
-    #    "Definition of BLOCKED (conservative):\n"
-    #    "- If any solid obstacle (cone, barrier, box, wall, furniture) is visible in the LOWER HALF of the image,\n"
-    #    "  assume it may block the robot within ~1 meter and set blocked=true.\n"
-    #    "- Otherwise set blocked=false.\n"
-    #    "Return ONLY valid JSON:\n"
-    #    "{\n"
-    #    '  "reasoning": "one short sentence",\n'
-    #    '  "blocked": true or false\n'
-    #    "}\n"
-    #    f"Instruction: {instruction}"
-    #)
-
-    #prompt = (
-    #    "You are the real-time visual-spatial reasoning engine for a robot vacuum. You operate in a continuous loop, receiving a front-facing camera image and current odometry."
-    #    "Your Mission: Navigate the space to clean efficiently while strictly avoiding collisions with objects, walls, or drops."
-    #    "Capabilities & Rules:"
-    #    "You can only move by turning a relative number of degrees and driving a relative distance in meters."
-    #    "turn_degrees: Positive numbers turn RIGHT. Negative numbers turn LEFT. 0 means keep the steering straight. Max turn per step is 90 degrees."
-    #    "move_meters: Positive numbers drive FORWARD. Negative numbers drive BACKWARD. 0 means stop. Max drive per step is 0.5 meters."
-    #    "Safety First: If an obstacle is directly in front of you (less than 0.3m), you MUST stop (move_meters: 0) or back up, and turn to clear it."
-    #    "Reasoning: Always analyze the scene in scene_analysis before outputting movement commands."
-    #    "You MUST respond ONLY with a raw, valid JSON object matching this exact schema, with no markdown formatting or conversational text:"
-    #    "{"
-    #    '   "scene_analysis": "Briefly describe the floor ahead, objects, and safe paths.",'
-    #    '   "obstacle_detected": true/false,'
-    #    '   "turn_degrees": 0.0,'
-    #    '   "move_meters": 0.0'
-    #    "}"
-    #    f"Instruction: {instruction}"
-    #)
-
-    #payload = {
-    #    "model": NIM_MODEL,
-    #    "messages": [
-    #        {"role": "system", "content": "You are a robot navigation assistant."},
-    #        {
-    #            "role": "user",
-    #            "content": [
-    #                {"type": "image_url", "image_url": {"url": image_input_url}},
-    #                {"type": "text", "text": prompt},
-    #            ],
-    #        },
-    #    ],
-    #    "max_tokens": 300,
-    #    "stream": False,
-    #}
-
-    ## Call NIM and surface the error body for debugging
-    #r = requests.post(f"{NIM_BASE_URL}/chat/completions", json=payload, timeout=30)
-    #if r.status_code >= 400:
-    #    raise HTTPException(status_code=502, detail=f"NIM error {r.status_code}: {r.text}")
-
-    #model_text = r.json()["choices"][0]["message"]["content"]
-
-    ## Parse model output JSON
-    #try:
-    #    parsed = extract_json(model_text)
-    #    reasoning = str(parsed.get("reasoning", ""))
-    #    blocked = bool(parsed.get("blocked", False))
-    #except Exception:
-    #    raise HTTPException(status_code=500, detail="Model output was not valid JSON")
-    #
-    ## Map decision to action deterministically (server-side policy)
-    #action = {"move": "stop", "distance": 0.0} if blocked else {"move": "linear_x", "distance": 0.5}
- 
-   
-    #return {"reasoning": reasoning, "action": action}
-
-    # Build strict navigation decision prompt
-    #prompt = (
-    #    "You are a robot vacuum front-facing camera navigation system.\n"
-    #    "Analyze the scene and decide the next immediate safe movement.\n"
-    #    "Rules:\n"
-    #    "- If any obstacle is within ~0.5 meters in front, obstacle_detected=true.\n"
-    #    "- If obstacle_detected=true:\n"
-    #    "  * move_meters must be 0.0\n"
-    #    "  * choose turn_degrees between -90 and 90 (negative=left, positive=right)\n"
-    #    "- If no obstacle:\n"
-    #    "  * obstacle_detected=false\n"
-    #    "  * move_meters between 0.2 and 0.8\n"
-    #    "  * turn_degrees must be 0.0\n"
-    #    "Return ONLY valid JSON with this structure:\n"
-    #    "{\n"
-    #    '  "scene_analysis": "one short paragraph",\n'
-    #    '  "obstacle_detected": true or false,\n'
-    #    '  "turn_degrees": number,\n'
-    #    '  "move_meters": number\n'
-    #    "}\n"
-    #    f"{instruction}"
-    #)
-
     prompt = (
         "You are the real-time autonomous navigation brain (Vision-Language Model) for a differential-drive robot vacuum performing a boustrophedon (lawnmower) floor sweep."
+        "Your task is to continuously analyze the forward camera image and output a smooth motion command that advances the robot while maintaining coverage and avoiding obstacles."
+        "The robot supports ARC MOTION: turning and moving forward simultaneously in a continuous curve."
         "KINEMATIC CONSTRAINTS:"
-        "turn_degrees: Continuous float [-180.0 to 180.0]. Positive = RIGHT (CW), Negative = LEFT (CCW). Use precise decimal values (e.g., 42.3, -15.8) for smooth kinematic arcs and proportional control."
-        "move_meters: Continuous float [0.0 to 0.20]. FORWARD ONLY. Never output negative values (no reversing)."
-        "DECISION PRIORITY (Evaluate sequentially. The first matching condition dictates the state):"
-        "ENTRAPMENT: Image is mostly dark/black (under low furniture) -> move=0.0. Calculate a wide turn toward the brightest pixel cluster [+/- 90.0 to 180.0]."
-        "IMMINENT HAZARD / THIN OBSTACLES: Any object (e.g., cables, shoes, table legs, pets) dead-center and <0.3m away -> Immediate hard avoidance. move=0.0. Calculate a sharp continuous turn [+/- 60.0 to 120.0] perfectly inverse to the object's visual centroid."
-        "ROW END (U-TURN): Wall, baseboard, or continuous barrier visible across the center 60% of the image -> Row completion. move=0.0. Calculate a precise perpendicular turn (typically +/- 85.0 to 95.0 based on sweep row direction). Do not wait for contact."
-        "MAJOR OBSTACLE AVOIDANCE: Object fills >15% of the frame OR is <0.8m in the immediate forward vector -> Proportional dodge. move=0.0 to 0.05. Calculate a continuous deflection angle [+/- 30.0 to 60.0] away from the obstacle's center of mass."
-        "MINOR OBSTACLE BYPASS: Object is small, distant (>0.8m), or near the peripheral edges -> Smooth kinematic arc. move=0.05 to 0.15. Calculate a slight, continuous deflection [+/- 5.0 to 25.0] to safely bypass while maintaining momentum."
-        "CLEAR PATH (TRAJECTORY TRACKING): Floor is unobstructed -> Proportional row-tracking. move=0.15 to 0.20. Calculate a precise micro-correction [+/- 0.0 to 10.0] to minimize cross-track error and maintain strict parallel heading."
-        "RESPONSE RULES:"
-        "scene_analysis must be exactly ONE sentence, maximum 15 words, stating the dominant visual feature and intended kinematic response."
+        "turn_degrees: Continuous float [-180.0 to 180.0].  "
+        "Positive = RIGHT (clockwise), Negative = LEFT (counter-clockwise).  "
+        "Small values create gentle arcs, large values create sharper pivots."
+        "move_meters: Continuous float [0.0 to 0.8].  "
+        "Forward only. Never output negative values."
+        "ARC MOTION RULE:"
+        "The robot can turn and move at the same time.  "
+        "Prefer curved trajectories instead of stopping unless an immediate hazard exists."
+        "Guidelines:"
+        "- Minor corrections → small turn with forward motion."
+        "- Obstacle avoidance → medium turn while moving slowly."
+        "- Sharp hazards → stop and turn in place."
+        "PRIORITY DECISION PIPELINE (evaluate sequentially; first match applies):"
+        "1. ENTRAPMENT"
+        "Image mostly dark or occluded (under furniture)."
+        "Response:"
+        "move_meters = 0.0"
+        "Turn toward brightest visible region using a wide angle [+90.0 to +180.0 or -90.0 to -180.0]."
+        "2. IMMINENT HAZARD / THIN OBSTACLES"
+        "Object directly ahead and closer than ~0.3m (cables, legs, pets, shoes)."
+        "Response:"
+        "move_meters = 0.0"
+        "Sharp avoidance turn [+70.0 to +140.0 or -70.0 to -140.0] opposite the obstacle centroid."
+        "3. ROW END (U-TURN)"
+        "Wall or continuous barrier spans the central ~60% of the frame."
+        "Response:"
+        "Perform a sweeping U-turn arc."
+        "turn_degrees ≈ +/-85.0 to +/-110.0"
+        "move_meters ≈ 0.15 to 0.30"
+        "4. MAJOR OBSTACLE AVOIDANCE"
+        "Object occupies >15% of frame or lies <0.8m ahead."
+        "Response:"
+        "Slow curved dodge."
+        "turn_degrees ≈ +/-35.0 to +/-70.0 away from obstacle center"
+        "move_meters ≈ 0.05 to 0.50"
+        "5. MINOR OBSTACLE BYPASS"
+        "Small or distant object near frame edges (>0.8m)."
+        "Response:"
+        "Smooth bypass arc."
+        "turn_degrees ≈ +/-8.0 to +/-30.0"
+        "move_meters ≈ 0.15 to 0.45"
+        "6. CLEAR PATH (ROW TRACKING)"
+        "Floor is unobstructed."
+        "Response:"
+        "Forward motion with micro-corrections to maintain straight sweep rows."
+        "turn_degrees ≈ +/-0.0 to +/-8.0"
+        "move_meters ≈ 0.30 to 0.60"
+        "MOTION STYLE RULES:"
+        "Prefer continuous motion over stop-turn-go behavior."
+        "Use larger move_meters when path is clear."
+        "Reduce speed as obstacles approach."
+        "Use arcs to smoothly navigate around objects."
+        "Reserve move_meters = 0.0 only for hazards or entrapment."
+        "RESPONSE FORMAT RULES:"
+        "scene_analysis must be exactly ONE sentence (maximum 15 words) describing the dominant visual cue and motion."
         "turn_degrees must be a continuous float."
-        "move_meters must be a continuous float >= 0.0 and <= 0.50."
-        "Output ONLY the raw JSON object exactly matching the schema below. Do not wrap in markdown tags (no ```json). Do not include any explanations or outside text."
-        '{"scene_analysis": "string", "obstacle_detected": true, "turn_degrees": 0.0, "move_meters": 0.0}'
+        "move_meters must be a continuous float between 0.0 and 0.60."
+        "Output ONLY the raw JSON object exactly matching the schema below."
+        "Do not include explanations."
+        "Do not include markdown formatting."
+        "JSON SCHEMA:"
+        "{"
+        '"scene_analysis": "string",'
+        '"obstacle_detected": true,'
+        '"turn_degrees": 0.0,'
+        '"move_meters": 0.0'
+        "}"
         f"{instruction}"
     )
 

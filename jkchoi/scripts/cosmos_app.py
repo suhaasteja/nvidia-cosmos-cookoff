@@ -17,8 +17,8 @@ app = FastAPI(title="Cosmos Reason2 API Bridge", version="1.0")
 # Load configuration from environment variables
 API_KEY = os.environ.get("BRIDGE_API_KEY", "")
 NIM_BASE_URL = os.environ.get("NIM_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
-#NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-2b")
-NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-8b")
+NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-2b")
+#NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-8b")
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
 
 # Limit maximum accepted image size (bytes)
@@ -258,7 +258,7 @@ def reason2_action(req: Reason2Request, x_api_key: str = Header(default="")):
         "RESPONSE RULES:"
         "scene_analysis must be exactly ONE sentence, maximum 15 words, stating the dominant visual feature and intended kinematic response."
         "turn_degrees must be a continuous float."
-        "move_meters must be a continuous float >= 0.0 and <= 0.20."
+        "move_meters must be a continuous float >= 0.0 and <= 0.50."
         "Output ONLY the raw JSON object exactly matching the schema below. Do not wrap in markdown tags (no ```json). Do not include any explanations or outside text."
         '{"scene_analysis": "string", "obstacle_detected": true, "turn_degrees": 0.0, "move_meters": 0.0}'
         f"{instruction}"

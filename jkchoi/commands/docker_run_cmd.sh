@@ -1,12 +1,12 @@
 
 
 # Choose a container name for bookkeeping
-#export CONTAINER_NAME="nvidia-cosmos-reason2-2b" # or "nvidia-cosmos-reason2-8b"
-export CONTAINER_NAME="nvidia-cosmos-reason2-8b"
+export CONTAINER_NAME="nvidia-cosmos-reason2-2b" # or "nvidia-cosmos-reason2-8b"
+#export CONTAINER_NAME="nvidia-cosmos-reason2-8b"
 
 # The container name from the previous ngc registry image list command
-#Repository="cosmos-reason2-2b" # or "cosmos-reason2-8b"
-Repository="cosmos-reason2-8b"
+Repository="cosmos-reason2-2b" # or "cosmos-reason2-8b"
+#Repository="cosmos-reason2-8b"
 Latest_Tag="1.6.0"
 
 # Choose a VLM NIM Image from NGC

@@ -273,9 +273,10 @@ See [`README_3DGUT.md`](README_3DGUT.md) for detailed instructions.
 
 ## 🎓 Learning Resources
 
-- [NVIDIA Isaac Sim Documentation](https://docs.omniverse.nvidia.com/isaacsim/latest/)
-- [Cosmos Reason2 Model Card](https://build.nvidia.com/nvidia/cosmos-reason2)
-- [3DGUT Paper](https://arxiv.org/abs/2405.09531)
+- [NVIDIA Isaac Sim Documentation](https://developer.nvidia.com/isaac/sim)
+- [Cosmos Reason2 Model Card](https://docs.nvidia.com/cosmos/latest/reason2/index.html)
+- [3DGUT reference 1](https://developer.nvidia.com/blog/how-to-instantly-render-real-world-scenes-in-interactive-simulation/)
+- [3DGUT reference 2](https://github.com/nv-tlabs/3dgrut)
 - [COLMAP Documentation](https://colmap.github.io/)
 - [Differential Drive Kinematics](https://en.wikipedia.org/wiki/Differential_wheeled_robot)
 

@@ -17,11 +17,12 @@ app = FastAPI(title="Cosmos Reason2 API Bridge", version="1.0")
 # Load configuration from environment variables
 API_KEY = os.environ.get("BRIDGE_API_KEY", "")
 NIM_BASE_URL = os.environ.get("NIM_BASE_URL", "http://127.0.0.1:8000/v1").rstrip("/")
-NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-2b")
+#NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-2b")
+NIM_MODEL = os.environ.get("NIM_MODEL", "nvidia/cosmos-reason2-8b")
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://127.0.0.1:8080").rstrip("/")
 
 # Limit maximum accepted image size (bytes)
-MAX_IMAGE_BYTES = int(os.environ.get("MAX_IMAGE_BYTES", str(2 * 1024 * 1024)))
+MAX_IMAGE_BYTES = int(os.environ.get("MAX_IMAGE_BYTES", str(10 * 1024 * 1024)))
 
 # Temporary image TTL (seconds)
 IMAGE_TTL_S = int(os.environ.get("IMAGE_TTL_S", "120"))
@@ -220,28 +221,49 @@ def reason2_action(req: Reason2Request, x_api_key: str = Header(default="")):
     #return {"reasoning": reasoning, "action": action}
 
     # Build strict navigation decision prompt
+    #prompt = (
+    #    "You are a robot vacuum front-facing camera navigation system.\n"
+    #    "Analyze the scene and decide the next immediate safe movement.\n"
+    #    "Rules:\n"
+    #    "- If any obstacle is within ~0.5 meters in front, obstacle_detected=true.\n"
+    #    "- If obstacle_detected=true:\n"
+    #    "  * move_meters must be 0.0\n"
+    #    "  * choose turn_degrees between -90 and 90 (negative=left, positive=right)\n"
+    #    "- If no obstacle:\n"
+    #    "  * obstacle_detected=false\n"
+    #    "  * move_meters between 0.2 and 0.8\n"
+    #    "  * turn_degrees must be 0.0\n"
+    #    "Return ONLY valid JSON with this structure:\n"
+    #    "{\n"
+    #    '  "scene_analysis": "one short paragraph",\n'
+    #    '  "obstacle_detected": true or false,\n'
+    #    '  "turn_degrees": number,\n'
+    #    '  "move_meters": number\n'
+    #    "}\n"
+    #    f"{instruction}"
+    #)
+
     prompt = (
-        "You are a robot vacuum front-facing camera navigation system.\n"
-        "Analyze the scene and decide the next immediate safe movement.\n"
-        "Rules:\n"
-        "- If any obstacle is within ~0.5 meters in front, obstacle_detected=true.\n"
-        "- If obstacle_detected=true:\n"
-        "  * move_meters must be 0.0\n"
-        "  * choose turn_degrees between -90 and 90 (negative=left, positive=right)\n"
-        "- If no obstacle:\n"
-        "  * obstacle_detected=false\n"
-        "  * move_meters between 0.2 and 0.8\n"
-        "  * turn_degrees must be 0.0\n"
-        "Return ONLY valid JSON with this structure:\n"
-        "{\n"
-        '  "scene_analysis": "one short paragraph",\n'
-        '  "obstacle_detected": true or false,\n'
-        '  "turn_degrees": number,\n'
-        '  "move_meters": number\n'
-        "}\n"
+        "You are the real-time autonomous navigation brain (Vision-Language Model) for a differential-drive robot vacuum performing a boustrophedon (lawnmower) floor sweep."
+        "KINEMATIC CONSTRAINTS:"
+        "turn_degrees: Continuous float [-180.0 to 180.0]. Positive = RIGHT (CW), Negative = LEFT (CCW). Use precise decimal values (e.g., 42.3, -15.8) for smooth kinematic arcs and proportional control."
+        "move_meters: Continuous float [0.0 to 0.20]. FORWARD ONLY. Never output negative values (no reversing)."
+        "DECISION PRIORITY (Evaluate sequentially. The first matching condition dictates the state):"
+        "ENTRAPMENT: Image is mostly dark/black (under low furniture) -> move=0.0. Calculate a wide turn toward the brightest pixel cluster [+/- 90.0 to 180.0]."
+        "IMMINENT HAZARD / THIN OBSTACLES: Any object (e.g., cables, shoes, table legs, pets) dead-center and <0.3m away -> Immediate hard avoidance. move=0.0. Calculate a sharp continuous turn [+/- 60.0 to 120.0] perfectly inverse to the object's visual centroid."
+        "ROW END (U-TURN): Wall, baseboard, or continuous barrier visible across the center 60% of the image -> Row completion. move=0.0. Calculate a precise perpendicular turn (typically +/- 85.0 to 95.0 based on sweep row direction). Do not wait for contact."
+        "MAJOR OBSTACLE AVOIDANCE: Object fills >15% of the frame OR is <0.8m in the immediate forward vector -> Proportional dodge. move=0.0 to 0.05. Calculate a continuous deflection angle [+/- 30.0 to 60.0] away from the obstacle's center of mass."
+        "MINOR OBSTACLE BYPASS: Object is small, distant (>0.8m), or near the peripheral edges -> Smooth kinematic arc. move=0.05 to 0.15. Calculate a slight, continuous deflection [+/- 5.0 to 25.0] to safely bypass while maintaining momentum."
+        "CLEAR PATH (TRAJECTORY TRACKING): Floor is unobstructed -> Proportional row-tracking. move=0.15 to 0.20. Calculate a precise micro-correction [+/- 0.0 to 10.0] to minimize cross-track error and maintain strict parallel heading."
+        "RESPONSE RULES:"
+        "scene_analysis must be exactly ONE sentence, maximum 15 words, stating the dominant visual feature and intended kinematic response."
+        "turn_degrees must be a continuous float."
+        "move_meters must be a continuous float >= 0.0 and <= 0.20."
+        "Output ONLY the raw JSON object exactly matching the schema below. Do not wrap in markdown tags (no ```json). Do not include any explanations or outside text."
+        '{"scene_analysis": "string", "obstacle_detected": true, "turn_degrees": 0.0, "move_meters": 0.0}'
         f"{instruction}"
     )
-    
+
     payload = {
         "model": NIM_MODEL,
         "messages": [

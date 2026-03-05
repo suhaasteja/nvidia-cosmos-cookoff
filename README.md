@@ -81,7 +81,7 @@ python launch_scene.py
 
 The web dashboard will be available at `http://localhost:5000`
 
-### 3. Set Up Cosmos Reason2 (Optional - for AI Navigation)
+### 3. Set Up Cosmos Reason2 inside Brev Instances (Optional - for AI Navigation)
 
 ```bash
 # Pull and run the Cosmos Reason2 NIM container

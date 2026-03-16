@@ -5,6 +5,9 @@
 CosmosCleanerBot is a complete robotics simulation project that combines NVIDIA's Cosmos vision-language models with Isaac Sim physics simulation to create an intelligent autonomous cleaning robot. The project demonstrates real-world scene reconstruction, AI-powered navigation, and interactive robot control through a web-based dashboard.
 
 ---
+## Demo Video
+[https://streamable.com/zf4r1t
+](url)
 
 ## 🎯 Project Overview
 
